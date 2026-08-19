@@ -1,3 +1,3 @@
-# voidbr-pkgfile
+# voidbr-goedit
 
-Template for VoidBR pkgmake/pkgfile packages
+Editor de texto escrito em GO like VsCode
