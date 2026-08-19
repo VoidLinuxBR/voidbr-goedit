@@ -1,7 +1,7 @@
 # Maintainer: Vilmar Catafesta <vcatafesta@gmail.com>
 
 pkgname=voidbr-goedit
-pkgdesc="Editor de texto escrito em Go like VsCode"
+pkgdesc="Editor de texto de terminal (TUI) em Go"
 pkgver=$(date +%Y%m%d)
 pkgrel=$(date +%H%M)
 provides=()  # "eu SOU o $pkgname pkg1, pra quem depender deles"
