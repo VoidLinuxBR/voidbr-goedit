@@ -3,7 +3,8 @@
 # goedit
 
 **Editor de texto de terminal (TUI) em Go** — abas, split, sidebar, syntax
-highlighting, plugins em Lua e um `F2` de renomear ao vivo que dá gosto de usar.
+highlighting, autocompletar, menu de contexto, seleção em bloco, formatador
+de código, plugins em Lua e um `F2` de renomear ao vivo que dá gosto de usar.
 
 ![Go version](https://img.shields.io/badge/Go-1.21%2B-00ADD8?logo=go&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
@@ -42,6 +43,14 @@ cada mudança, pra evoluir conforme o uso pedir.
 - 🧩 **Plugins em Lua** — scripts rodáveis pela paleta de comandos
 - ⚙️ Indentação configurável, comentar/descomentar, duplicar/mover linha,
   modo overwrite, e o resto do repertório que se espera de um editor sério
+- 🧠 **Autocompletar** por palavras do buffer, com popup navegável
+  (não é IntelliSense semântico — busca textual no que já foi escrito)
+- 🖱️ **Menu de contexto** (botão direito) nas abas, no texto e na sidebar
+- 🟦 **Seleção em bloco/coluna** (`Ctrl+Shift+setas`), igual o VS Code
+- 🧹 **Formatador de código** externo por linguagem (`gofmt`, `shfmt`,
+  `prettier`, via `Shift+Alt+F`)
+- 📐 **Sidebar redimensionável** (arrasta a divisória) e com busca
+  incremental por digitação
 
 ## Instalação
 
@@ -71,6 +80,7 @@ cp goedit ~/.local/bin/goedit
 ```sh
 goedit                 # abre sem arquivo (buffer novo)
 goedit arquivo.go      # abre um arquivo direto
+goedit *.sh            # abre todos os arquivos que baterem, um por aba
 goedit --version       # mostra a versão instalada
 ```
 
@@ -102,6 +112,8 @@ goedit --version       # mostra a versão instalada
 | `Ctrl+D` | Duplicar linha atual |
 | `Alt+↑` / `Alt+↓` | Mover linha atual pra cima/baixo |
 | `Ctrl+/` | Comentar/descomentar linha atual |
+| `Ctrl+Shift+↑`/`↓`/`←`/`→` | Seleção em bloco/coluna — marca um retângulo de texto (mesma faixa de colunas em várias linhas), digitar troca em todas as linhas marcadas de uma vez. `Enter` confirma, `Esc` cancela |
+| `Shift+Alt+F` | Formatar código com o formatador externo da linguagem (`gofmt`, `shfmt`, etc — precisa estar instalado) |
 | `Ctrl+K` | Apagar linha atual |
 | `Delete` | Apagar caractere à frente do cursor (ou a seleção, se houver) |
 | `Insert` | Alterna entre modo inserir e sobrescrever (mostra `INS`/`OVR` na barra de status) |
@@ -122,7 +134,14 @@ chegam como sequências distintas e funcionam normalmente.
 </details>
 
 A sidebar começa **desligada** — `Ctrl+B` liga (já focada, pronta pra
-navegar com as setas), `Ctrl+B` de novo (ou `Esc`) desliga.
+navegar com `↑`/`↓`/`Page Up`/`Page Down`/`Home`/`End`), `Ctrl+B` de novo
+(ou `Esc`) desliga. A entrada `../` no topo da lista (quando não está na
+raiz) volta pra pasta anterior — clicável ou com `Enter`. Clicar num
+arquivo abre ele numa aba sem fechar a sidebar (só `Ctrl+B` fecha).
+Digitar letras faz busca incremental (tipo explorador de arquivos): `f`
+pula pro primeiro item que começa com "f", digitar mais letras em
+seguida refina a busca; parar de digitar reinicia do zero na próxima
+tecla.
 
 ## Mouse
 
@@ -131,8 +150,22 @@ navegar com as setas), `Ctrl+B` de novo (ou `Esc`) desliga.
 | Clique no texto | Posiciona o cursor ali |
 | Clique + arrasto no texto | Seleciona o trecho arrastado |
 | Clique numa aba | Troca pra aquele buffer |
+| Clique no "x" de uma aba | Fecha aquela aba |
+| Clique direito numa aba | Abre menu: Fechar / Fechar outras / Fechar todas / Salvar |
+| Clique direito no texto | Abre menu: Copiar / Cortar / Colar / Selecionar tudo / Formatar código |
 | Clique num item da sidebar | Abre o arquivo, ou entra na pasta |
+| Clique direito no título "SIDEBAR" | Abre menu: Fechar / Atualizar |
+| Clique no "x" do título da sidebar | Fecha a sidebar (igual `Ctrl+B`) |
+| Arrastar a divisória (│) da sidebar | Redimensiona a largura dela |
 | Roda do mouse | Rola o texto, cursor acompanha a linha do ponteiro |
+
+> **Nota:** com o mouse do editor ligado, o terminal encaminha todos os
+> cliques pro goedit em vez de mostrar o menu nativo dele. Isso é padrão
+> em qualquer app de terminal com mouse habilitado (Vim, etc.), não é
+> específico do goedit. Pra usar o menu/seleção nativo do **terminal**
+> (copiar pro clipboard do sistema, por exemplo), segura `Shift` enquanto
+> clica — funciona na maioria dos terminais baseados em VTE
+> (xfce4-terminal, gnome-terminal) e no xterm.
 
 ## Configuração
 
@@ -173,6 +206,35 @@ Roda pela paleta de comandos (`Ctrl+P`). API completa e mais exemplos em
 | `goedit.notify(msg)` | mostra uma mensagem na barra inferior |
 | `goedit.register_command(nome, fn)` | registra um comando pra paleta |
 
+## Autocompletar
+
+Digitar 2 ou mais letras de um identificador abre um popup com palavras
+já usadas no arquivo que começam com isso — busca textual no que já foi
+escrito (tipo o keyword completion nativo do Vim), **não é IntelliSense
+semântico**: não entende tipos, escopo, nem é ciente da linguagem.
+
+- `↓` / `↑`: navega entre as sugestões
+- `Tab` ou `Enter`: aceita a sugestão selecionada
+- `Esc`: cancela
+- Continuar digitando refina a busca; apagar/mover o cursor fecha o popup
+
+## Formatador de código
+
+`Shift+Alt+F` ou "Formatar código" no menu de contexto do texto roda um
+formatador externo (um programa de verdade instalado no sistema, não algo
+embutido no goedit) de acordo com a extensão do arquivo:
+
+| Extensão | Formatador |
+|---|---|
+| `.go` | `gofmt` |
+| `.sh`, `.bash` | `shfmt` |
+| `.yml`, `.yaml` | `prettier` |
+| sem extensão | tenta pelo shebang; sem shebang, usa `shfmt` como padrão |
+
+Precisa do binário instalado e no `$PATH` — se não tiver, mostra uma
+mensagem clara em vez de travar. Pra adicionar mais linguagens, edita o
+mapa `formattersByExt` em `internal/ui/format.go`.
+
 ## Detecção de linguagem
 
 Arquivos com extensão usam a extensão direto. Sem extensão (scripts tipo
@@ -187,6 +249,10 @@ internal/buffer/         texto do arquivo + undo/redo (snapshots)
 internal/syntax/         highlight via chroma
 internal/plugin/         runtime Lua (gopher-lua) + API do editor
 internal/ui/              tcell: desenho de tela, tabs, sidebar, split, mouse
+  ├─ suggest.go            autocompletar por palavras do buffer
+  ├─ blockselect.go        seleção em bloco/coluna
+  ├─ format.go             formatador de código externo
+  └─ mouse.go              clique, arrasto, roda, menus de contexto
 internal/config/         caminhos de configuração
 examples/plugins/        plugin Lua de exemplo
 ```
@@ -195,8 +261,9 @@ examples/plugins/        plugin Lua de exemplo
 
 Base sólida e funcional, não uma réplica 1:1 de editores gráficos: undo é
 por snapshot de buffer (não granular por caractere), busca sem regex, e o
-split mostra 2 painéis fixos sem redimensionar. Dá pra evoluir a partir
-daqui — ver [`CHANGELOG.md`](CHANGELOG.md) pro histórico de versões.
+**split** (`Ctrl+\`) mostra 2 painéis fixos sem redimensionar (diferente
+da sidebar, essa sim redimensionável por arrasto). Dá pra evoluir a
+partir daqui — ver [`CHANGELOG.md`](CHANGELOG.md) pro histórico de versões.
 
 ## Contribuindo
 
