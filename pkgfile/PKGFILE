@@ -14,7 +14,11 @@ url="https://github.com/voidlinuxbr/${pkgname}"
 source=("git+${url}.git")
 md5sums=('SKIP')
 makedepends=()
-depends=()
+depends=(
+  shfmt
+  prettier
+  black
+)
 backup=()
 
 package() {
