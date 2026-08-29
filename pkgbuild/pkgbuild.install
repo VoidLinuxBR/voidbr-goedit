@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+LIBRARY=${LIBRARY:-'/usr/share/chiliwebview/bcc/shell'}
+[[ -f "${LIBRARY}/pkgbuildlib.sh" ]] && source "${LIBRARY}/pkgbuildlib.sh"
+#
+declare IS_VERBOSE=true
+declare IS_UPGRADE=false
+declare IS_DBLOCK=false
+declare IS_METAPKG=false
+declare IS_SKEL=false
+declare DM='lightdm'
+declare WM='goedit'
+declare pkgname=chili-"${WM}"
+declare servicesToEnable=()
+declare servicesToDisable=()
+
+post_install() {
+  [[ $IS_VERBOSE = true ]] && sh_init                        || { sh_init 2>/dev/null                        || true; }
+  [[ $IS_VERBOSE = true ]] && sh_copy_user_etc_usr_opt_files || { sh_copy_user_etc_usr_opt_files 2>/dev/null || true; }
+  [[ $IS_VERBOSE = true ]] && sh_configure_environment       || { sh_configure_environment 2>/dev/null       || true; }
+  [[ $IS_VERBOSE = true ]] && sh_load_optdepends             || { sh_load_optdepends 2>/dev/null             || true; }
+
+  # funcao para configurar copiar algo para home do usuario, tipo skel, etc
+  # somente será executado se ativar IS_SKEL=true, ou IS_METAPK=true estiver ativado
+  configure_user_and_skel
+
+	if ((${#OPTDEPENDS[@]})); then
+		sh_remove_lock
+		synchronizing_database
+#		sh_check_package_exist
+#   install_package_pipewire-jack
+		sh_restoring_lock
+
+#  	msg "Installing optdepends packages..."
+#		install_packages "${OPTDEPENDS[@]}"
+    configure_metapkg
+		create_optdepends_hook
+#		sh_restoring_lock
+	fi
+
+# sh_disable_services
+# sh_enable_services
+  sh_finish
+
+}
+
+post_upgrade() {
+  IS_UPGRADE=true
+  post_install
+}
