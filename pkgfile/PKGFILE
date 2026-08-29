@@ -18,6 +18,7 @@ depends=(
   shfmt
   prettier
   black
+  xsel
 )
 backup=()
 
