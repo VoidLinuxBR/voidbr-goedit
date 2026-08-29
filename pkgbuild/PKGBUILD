@@ -1,0 +1,45 @@
+# Maintainer: Vilmar Catafesta <vcatafesta@gmail.com>
+
+pkgname=chili-goedit
+pkgdesc="Editor de texto de terminal (TUI) em Go"
+pkgver=$(date +%Y%m%d)
+pkgrel=$(date +%H%M)
+provides=()  # "eu SOU o $pkgname pkg1, pra quem depender deles"
+replaces=()  # "remove o pkg1 pkg2 antigo automaticamente quando eu instalar"
+conflicts=() # "nunca me deixe coexistir com o pkg1 pkg2 original"
+arch=('any')
+license=('MIT')
+#url="ssh://git@github.com/voidlinuxbr/${pkgname}"
+url="https://github.com/voidlinuxbr/voidbr-goedit"
+source=("git+${url}.git")
+md5sums=('SKIP')
+makedepends=()
+depends=(
+  shfmt
+  prettier
+  python-black
+  xsel
+)
+backup=()
+
+package() {
+	cd "${srcdir}/voidbr-goedit"
+
+	local dirs=("boot" "etc" "opt" "usr" "var")
+	for dir in "${dirs[@]}"; do
+		if [ -d "${dir}" ]; then
+			cp -a "${dir}" "${pkgdir}/"
+		fi
+	done
+
+	if [ -f "LICENSE" ]; then
+		install -Dm644 LICENSE \
+			"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+	fi
+
+	if [ -f "README.md" ]; then
+		install -Dm644 README.md \
+			"${pkgdir}/usr/share/doc/${pkgname}/README.md"
+	fi
+}
+
