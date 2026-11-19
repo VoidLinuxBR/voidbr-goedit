@@ -68,3 +68,11 @@ pre_upgrade() {
 post_upgrade() {
 	log "Finalizando upgrade"
 }
+
+post_remove() {
+	# o /usr/local/bin/ed -> goedit sai junto com o pacote; volta o ed -> nano
+	# (o mesmo link que o voidbr-base-config cria quando não há goedit)
+	if [ ! -e /usr/local/bin/ed ] && [ -x /usr/bin/nano ]; then
+		ln -sf /usr/bin/nano /usr/local/bin/ed
+	fi
+}
